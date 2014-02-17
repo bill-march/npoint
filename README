@@ -1,0 +1,91 @@
+N-point correlation function estimation
+npoint library
+
+Contact: Bill March (march@gatech.edu)
+
+Additional authors: 
+Dongryeol Lee (drselee@gmail.com)
+Marat Dukhan (maratek@gmail.com)
+Kenneth Czechowski (kent.czechowski@gmail.com)
+Thomas Benson (Thomas.Benson@gtri.gatech.edu)
+
+References: 
+Original tree-based npcf estimation: 
+Gray & Moore, NIPS 2000.
+Efficient jackknife resampling and multi-matcher algorithms:
+March, Connolly, & Gray, SIGKDD 2012.
+Optimized base case kernels:
+March, et al., Supercomputing 2012.
+
+
+============================================================================
+Dependencies: 
+This code requires the MLPACK machine learning library, available at
+mlpack.org for space-partitioning trees and general I/O functionality.
+
+CMake (version 2.8 or higher) is required to build the code.
+
+============================================================================
+Building: 
+
+For source code in $SRC_DIR, you may build the code in a directory $BUILD_DIR
+by:
+cd $BUILD_DIR
+cmake -D DEBUG=OFF -D PROFILE=OFF -D MLPACK_INCLUDE_DIR=$MLPACK_INCLUDE_DIR
+-D MLPACK_LIBDIR=$MLPACK_LIB_DIR $SRC_DIR
+make
+
+In order to support all of the optimized base case kernels, use gcc 4.6.
+
+
+============================================================================
+Executables:
+
+${n}_point main computes the raw correlation counts for a single matcher 
+(set of distance constraints) on a single node.  distributed_${n}_point_main
+does the same using MPI for inter-node communication. Thread parallelism is 
+currently supported through creating multiple MPI processes per node. 
+
+distributed_angle_main (and it's serial version, angle_3pt_main) compute
+3pcf raw correlation counts for an angle matcher. See the files for a 
+description of the format for angle matchers.
+
+distributed_multi_matcher_main (and multi_matcher_main) compute npcf raw 
+correlation counts for multi-matchers.  See the files for a description of 
+the format for multi matchers.
+
+============================================================================
+Example use: 
+
+data.csv: 
+Input data points, contained in a cubic region of size 100 on each side. 
+Arguments a, b, c specify the region size.
+
+lower_matcher.csv:
+0.0 0.9 0.9
+0.9 0.0 0.9
+0.9 0.9 0.0
+
+upper_matcher.csv:
+0.0 1.0 1.0
+1.0 0.0 1.0
+1.0 1.0 0.0
+
+./3_point_main -v -d data.csv -R 1000 -l lower_matcher.csv -u upper_matcher.csv
+-a 100 -b 100 -c 100 -x 2 -y 2 -z 2
+
+This call will split the data in data.csv (contained in a cube of side length
+100), into 8 equal sized jackknife resampling regions.  It will compute (and 
+output to cout) the DDD, DDR, DRR, and RRR raw correlation counts for the data 
+and 1000 uniformly distributed random points. The algorithm will count triples 
+where each pairwise distance is between 0.9 and 1.0 (in the same units as the 
+input data).
+
+Leaving the arguments x,y,z unspecified will not perform any resampling. 
+Setting -R to 0 (or leaving it unspecified) will only compute counts for the 
+data. The -v argument prints additional execution and timing info. 
+
+
+
+
+
